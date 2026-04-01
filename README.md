@@ -1,1 +1,556 @@
-# MPAC-Financial-Management-System
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="theme-color" content="#c62828">
+  <title>MPAC Financial System | Real-Time Cloud Sync</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0/dist/chartjs-plugin-datalabels.min.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    :root {
+      --church-red: #c62828;
+      --church-red-dark: #b71c1c;
+      --church-blue: #0a2f44;
+      --church-blue-dark: #082435;
+      --church-gold: #f5b042;
+      --shadow-xl: 0 25px 50px -12px rgba(0,0,0,0.3);
+      --shadow-glow: 0 0 20px rgba(198,40,40,0.3);
+    }
+    body {
+      font-family: 'Inter', sans-serif;
+      background: radial-gradient(circle at 10% 20%, #fff8f0 0%, #fff0e0 100%);
+      min-height: 100vh;
+    }
+    .container { max-width: 1800px; margin: 0 auto; padding: 20px; }
+    .hero {
+      background: linear-gradient(135deg, var(--church-blue), #041e2c);
+      border-radius: 48px;
+      padding: 30px 40px;
+      margin-bottom: 30px;
+      position: relative;
+      overflow: hidden;
+      box-shadow: var(--shadow-xl);
+      border: 1px solid rgba(245,176,66,0.3);
+    }
+    .hero::before {
+      content: "";
+      position: absolute;
+      top: -50%;
+      left: -20%;
+      width: 140%;
+      height: 200%;
+      background: radial-gradient(circle, rgba(198,40,40,0.15) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .hero-content { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 20px; position: relative; z-index: 2; }
+    .logo-area { display: flex; align-items: center; gap: 20px; }
+    .logo-ring { width: 75px; height: 75px; background: linear-gradient(135deg, var(--church-red), var(--church-red-dark)); border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 0 3px rgba(245,176,66,0.4); animation: epicPulse 2.2s infinite; }
+    @keyframes epicPulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(198,40,40,0.6); } 50% { box-shadow: 0 0 0 15px rgba(198,40,40,0); } }
+    .logo-ring img { width: 65px; height: 65px; border-radius: 50%; object-fit: cover; border: 2px solid var(--church-gold); }
+    .title h1 { font-size: 1.8rem; font-weight: 900; background: linear-gradient(135deg, #fff, var(--church-gold), #ffd966); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .title p { color: rgba(255,255,255,0.8); font-size: 0.7rem; letter-spacing: 2px; }
+    .balance-card { background: linear-gradient(135deg, rgba(255,255,255,0.15), rgba(198,40,40,0.2)); backdrop-filter: blur(12px); padding: 15px 30px; border-radius: 60px; text-align: center; border: 1px solid var(--church-gold); box-shadow: var(--shadow-glow); }
+    .balance-card .amount { font-size: 2rem; font-weight: 800; color: white; }
+    .sync-status { font-size: 0.65rem; margin-top: 5px; color: var(--church-gold); }
+    .tabs { display: flex; gap: 8px; background: white; border-radius: 80px; padding: 8px; margin-bottom: 30px; flex-wrap: wrap; box-shadow: var(--shadow-xl); }
+    .tab { flex: 1; background: transparent; border: none; padding: 12px 16px; border-radius: 60px; font-weight: 800; font-size: 0.85rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; color: #4b5563; transition: all 0.3s; }
+    .tab.active { background: linear-gradient(135deg, var(--church-red), var(--church-red-dark)); color: white; box-shadow: 0 8px 20px rgba(198,40,40,0.4); }
+    .filter-bar { background: white; border-radius: 40px; padding: 20px 28px; margin-bottom: 30px; display: flex; gap: 16px; flex-wrap: wrap; align-items: flex-end; box-shadow: var(--shadow-lg); }
+    .filter-group { flex: 1; min-width: 130px; }
+    .filter-group label { font-weight: 800; font-size: 0.7rem; margin-bottom: 8px; color: var(--church-blue); text-transform: uppercase; }
+    .filter-group select { width: 100%; padding: 10px 14px; border: 2px solid #e9ecef; border-radius: 40px; font-weight: 600; }
+    .apply-btn { background: linear-gradient(135deg, var(--church-red), var(--church-red-dark)); color: white; border: none; padding: 10px 28px; border-radius: 50px; font-weight: 800; cursor: pointer; transition: 0.2s; }
+    .cards-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px; margin-bottom: 30px; }
+    .stat-card { background: white; border-radius: 28px; padding: 20px; text-align: center; box-shadow: var(--shadow-lg); border-bottom: 3px solid var(--church-red); transition: all 0.3s; }
+    .stat-card:hover { transform: translateY(-5px); }
+    .stat-card .card-value { font-size: 1.8rem; font-weight: 800; color: var(--church-blue); }
+    .trend-up { color: #10b981; font-weight: 700; background: rgba(16,185,129,0.1); padding: 2px 8px; border-radius: 40px; display: inline-block; }
+    .trend-down { color: var(--church-red); font-weight: 700; background: rgba(198,40,40,0.1); padding: 2px 8px; border-radius: 40px; }
+    .dashboard-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(500px, 1fr)); gap: 24px; margin-bottom: 30px; }
+    .chart-card { background: white; border-radius: 32px; padding: 24px; box-shadow: var(--shadow-lg); border: 1px solid rgba(198,40,40,0.1); }
+    .chart-card h3 { font-size: 1.1rem; font-weight: 800; margin-bottom: 20px; color: var(--church-blue); border-left: 4px solid var(--church-red); padding-left: 15px; }
+    .chart-container { height: 280px; position: relative; }
+    .data-table { overflow-x: auto; background: white; border-radius: 28px; padding: 20px; box-shadow: var(--shadow-lg); margin-top: 20px; }
+    .data-table table { width: 100%; border-collapse: collapse; }
+    .data-table th, .data-table td { padding: 12px; text-align: left; border-bottom: 1px solid #e2e8f0; }
+    .data-table th { background: #f8fafc; font-weight: 800; color: var(--church-blue); border-top: 2px solid var(--church-red); }
+    .portal-container { background: white; border-radius: 44px; box-shadow: var(--shadow-xl); overflow: hidden; margin-bottom: 30px; }
+    .portal-header { background: linear-gradient(115deg, #1f2e3a, #0f2838); padding: 28px 36px; border-bottom: 3px solid var(--church-gold); }
+    .portal-header h2 { color: white; font-size: 1.5rem; font-weight: 800; display: flex; align-items: center; gap: 12px; }
+    .type-cards-epic { display: flex; flex-direction: row; gap: 28px; padding: 32px 36px; background: linear-gradient(135deg, #fefaf5, #fff6ed); flex-wrap: wrap; }
+    .epic-card { flex: 1; min-width: 300px; border-radius: 32px; padding: 24px; cursor: pointer; transition: all 0.35s; box-shadow: 0 8px 20px rgba(0,0,0,0.08); }
+    .epic-card.offering-card { background: linear-gradient(145deg, #fff8f5, #fff0e8); border: 2px solid rgba(198,40,40,0.3); }
+    .epic-card.offering-card.active { border: 3px solid #c62828; background: linear-gradient(135deg, #fff, #fff5ef); transform: translateY(-4px); }
+    .epic-card.tithes-card { background: linear-gradient(145deg, #f0f6fa, #e8f0f5); border: 2px solid rgba(10,47,68,0.3); }
+    .epic-card.tithes-card.active { border: 3px solid #0a2f44; background: linear-gradient(135deg, #fff, #f0f7fc); transform: translateY(-4px); }
+    .epic-card.expenses-card { background: linear-gradient(145deg, #fff5f2, #ffece6); border: 2px solid rgba(183,28,28,0.3); }
+    .epic-card.expenses-card.active { border: 3px solid #b71c1c; background: linear-gradient(135deg, #fff, #fff2ed); transform: translateY(-4px); }
+    .card-header-epic { display: flex; align-items: center; gap: 14px; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 2px solid rgba(0,0,0,0.08); }
+    .card-header-epic i { font-size: 2.2rem; }
+    .offering-card .card-header-epic i { color: #c62828; }
+    .tithes-card .card-header-epic i { color: #0a2f44; }
+    .expenses-card .card-header-epic i { color: #b71c1c; }
+    .card-header-epic h3 { font-size: 1.5rem; font-weight: 800; }
+    .offering-card .card-header-epic h3 { color: #c62828; }
+    .tithes-card .card-header-epic h3 { color: #0a2f44; }
+    .expenses-card .card-header-epic h3 { color: #b71c1c; }
+    .badges-grid-epic { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 8px; }
+    .badge-epic { padding: 8px 18px; border-radius: 60px; font-size: 0.75rem; font-weight: 700; cursor: default; }
+    .offering-card .badge-epic { background: linear-gradient(135deg, #c62828, #e05a5a); color: white; }
+    .tithes-card .badge-epic { background: linear-gradient(135deg, #0a2f44, #1e5a7a); color: white; }
+    .expenses-card .badge-epic { background: linear-gradient(135deg, #b71c1c, #d64545); color: white; }
+    .form-container { padding: 32px 36px; background: white; }
+    .form-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 24px; }
+    .form-label { font-weight: 800; font-size: 0.7rem; margin-bottom: 8px; color: var(--church-blue); text-transform: uppercase; }
+    .form-input, .form-select { width: 100%; padding: 14px 20px; border: 2px solid #e9e2d8; border-radius: 40px; font-weight: 500; transition: 0.2s; }
+    .form-input:focus, .form-select:focus { border-color: var(--church-red); outline: none; }
+    .submit-btn { background: linear-gradient(135deg, var(--church-red), var(--church-red-dark)); color: white; border: none; padding: 16px 28px; border-radius: 60px; font-weight: 800; width: 100%; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 12px; margin-top: 24px; transition: 0.2s; }
+    .submit-btn:hover { transform: translateY(-2px); filter: brightness(1.05); }
+    .toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); background: #1e293b; color: white; padding: 12px 28px; border-radius: 60px; z-index: 2000; display: none; border-left: 5px solid var(--church-gold); font-weight: 600; }
+    .hidden { display: none; }
+    @media (max-width: 1000px) { .type-cards-epic { flex-direction: column; } .dashboard-grid { grid-template-columns: 1fr; } .form-grid { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+<div class="container">
+  <div class="hero">
+    <div class="hero-content">
+      <div class="logo-area">
+        <div class="logo-ring"><img src="https://i.imgur.com/kTumLOY.jpg" alt="MPAC Church Logo"></div>
+        <div class="title"><h1>MPAC FINANCIAL SYSTEM</h1><p>REAL-TIME CLOUD SYNC • LIVE DATA</p></div>
+      </div>
+      <div class="balance-card">
+        <div class="amount" id="balanceAmount">ZAR 0</div>
+        <div class="sync-status" id="syncStatus">🟢 Live Cloud Sync</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" data-tab="dataentry"><i class="fas fa-pen-alt"></i> Data Entry</button>
+    <button class="tab" data-tab="overview"><i class="fas fa-chart-pie"></i> Overview</button>
+    <button class="tab" data-tab="offerings"><i class="fas fa-hand-holding-heart"></i> Offerings</button>
+    <button class="tab" data-tab="tithes"><i class="fas fa-church"></i> Tithes</button>
+    <button class="tab" data-tab="expenses"><i class="fas fa-receipt"></i> Expenses</button>
+    <button class="tab" data-tab="advanced"><i class="fas fa-chart-line"></i> Advanced</button>
+  </div>
+
+  <div class="filter-bar">
+    <div class="filter-group"><label>Year</label><select id="yearFilter"><option value="all">All Years</option><option value="2026">2026</option><option value="2025">2025</option></select></div>
+    <div class="filter-group"><label>Month</label><select id="monthFilter"><option value="all">All Months</option><option value="1">Jan</option><option value="2">Feb</option><option value="3">Mar</option><option value="4">Apr</option><option value="5">May</option><option value="6">Jun</option><option value="7">Jul</option><option value="8">Aug</option><option value="9">Sep</option><option value="10">Oct</option><option value="11">Nov</option><option value="12">Dec</option></select></div>
+    <div class="filter-group"><label>Category Focus</label><select id="categoryFilter"><option value="all">All Categories</option><option value="offerings">Offerings Only</option><option value="tithes">Tithes Only</option><option value="expenses">Expenses Only</option></select></div>
+    <button id="applyFilters" class="apply-btn"><i class="fas fa-sync-alt"></i> Refresh Data</button>
+  </div>
+
+  <!-- DATA ENTRY PORTAL -->
+  <div id="dataentryTab" class="tab-pane active">
+    <div class="portal-container">
+      <div class="portal-header"><h2><i class="fas fa-cloud-upload-alt"></i> Sacred Financial Entry Portal • Cloud Synced</h2></div>
+      <div class="type-cards-epic">
+        <div class="epic-card offering-card active" data-type="offering">
+          <div class="card-header-epic"><i class="fas fa-hand-holding-heart"></i><h3>Offerings</h3></div>
+          <div class="badges-grid-epic">
+            <span class="badge-epic">General</span><span class="badge-epic">Thanksgiving</span><span class="badge-epic">Building</span>
+            <span class="badge-epic">Mission</span><span class="badge-epic">First Fruits</span><span class="badge-epic">Seed</span>
+            <span class="badge-epic">Special</span><span class="badge-epic">Social Welfare</span>
+          </div>
+        </div>
+        <div class="epic-card tithes-card" data-type="tithe">
+          <div class="card-header-epic"><i class="fas fa-church"></i><h3>Tithes</h3></div>
+          <div class="badges-grid-epic"><span class="badge-epic">Regular (10%)</span><span class="badge-epic">First Tithe</span><span class="badge-epic">Special Tithe</span></div>
+        </div>
+        <div class="epic-card expenses-card" data-type="expense">
+          <div class="card-header-epic"><i class="fas fa-receipt"></i><h3>Expenses</h3></div>
+          <div class="badges-grid-epic"><span class="badge-epic">Utilities</span><span class="badge-epic">Salaries</span><span class="badge-epic">Maintenance</span><span class="badge-epic">Programs</span><span class="badge-epic">Outreach</span></div>
+        </div>
+      </div>
+      <div id="offeringFormContainer" class="form-container"><form id="offeringForm"><div class="form-grid"><div><label class="form-label">Date</label><input type="date" id="offeringDate" class="form-input"></div><div><label class="form-label">Offering Type</label><select id="offeringTypeSelect" class="form-select"><option>General Offering</option><option>Thanksgiving</option><option>Building Fund</option><option>Mission Fund</option><option>First Fruits</option><option>Seed Offering</option><option>Special Offering</option><option>Social Welfare</option></select></div><div><label class="form-label">Amount (ZAR)</label><input type="number" id="offeringAmount" class="form-input" step="0.01"></div><div><label class="form-label">Received By</label><input type="text" id="offeringReceivedBy" class="form-input"></div></div><button type="submit" id="saveOfferingBtn" class="submit-btn"><i class="fas fa-cloud-upload-alt"></i> Sync to Cloud</button></form></div>
+      <div id="titheFormContainer" class="form-container hidden"><form id="titheForm"><div class="form-grid"><div><label class="form-label">Date</label><input type="date" id="titheDate" class="form-input"></div><div><label class="form-label">Member Name</label><input type="text" id="memberName" class="form-input"></div><div><label class="form-label">Tithe Type</label><select id="titheTypeSelect" class="form-select"><option>Regular Tithe (10%)</option><option>First Tithe</option><option>Special Tithe</option></select></div><div><label class="form-label">Amount</label><input type="number" id="titheAmount" class="form-input" step="0.01"></div></div><button type="submit" id="saveTitheBtn" class="submit-btn"><i class="fas fa-cloud-upload-alt"></i> Sync to Cloud</button></form></div>
+      <div id="expenseFormContainer" class="form-container hidden"><form id="expenseForm"><div class="form-grid"><div><label class="form-label">Date</label><input type="date" id="expenseDate" class="form-input"></div><div><label class="form-label">Category</label><select id="expenseCategorySelect" class="form-select"><option>Utilities</option><option>Salaries</option><option>Maintenance</option><option>Programs</option><option>Outreach</option><option>Social Welfare</option></select></div><div><label class="form-label">Description</label><input type="text" id="expenseDescription" class="form-input"></div><div><label class="form-label">Amount</label><input type="number" id="expenseAmount" class="form-input" step="0.01"></div></div><button type="submit" id="saveExpenseBtn" class="submit-btn"><i class="fas fa-cloud-upload-alt"></i> Sync to Cloud</button></form></div>
+    </div>
+  </div>
+
+  <!-- Dashboard Tabs -->
+  <div id="overviewTab" class="tab-pane hidden"><div class="cards-grid" id="mainKPIs"></div><div class="dashboard-grid"><div class="chart-card"><h3>Income Distribution</h3><div class="chart-container"><canvas id="incomePieChart"></canvas></div></div><div class="chart-card"><h3>Monthly Income Trend</h3><div class="chart-container"><canvas id="monthlyIncomeTrendChart"></canvas></div></div><div class="chart-card"><h3>Income vs Expenses</h3><div class="chart-container"><canvas id="incomeExpenseCompareChart"></canvas></div></div><div class="chart-card"><h3>Top 5 Offering Types</h3><div class="chart-container"><canvas id="topCategoriesChart"></canvas></div></div></div></div>
+  <div id="offeringsTab" class="tab-pane hidden"><div class="cards-grid" id="offeringsKPIs"></div><div class="dashboard-grid"><div class="chart-card"><h3>Offerings by Type</h3><div class="chart-container"><canvas id="offeringsByTypeChart"></canvas></div></div><div class="chart-card"><h3>Offerings Monthly Trend</h3><div class="chart-container"><canvas id="offeringsTrendChart"></canvas></div></div><div class="chart-card"><h3>Offering Distribution</h3><div class="chart-container"><canvas id="offeringsPieChart"></canvas></div></div><div class="chart-card"><h3>Offerings Growth Rate <span id="offeringsGrowthBadge"></span></h3><div class="chart-container"><canvas id="offeringsGrowthChart"></canvas></div></div></div><div class="data-table" id="offeringsTable"></div></div>
+  <div id="tithesTab" class="tab-pane hidden"><div class="cards-grid" id="tithesKPIs"></div><div class="dashboard-grid"><div class="chart-card"><h3>Tithes by Type</h3><div class="chart-container"><canvas id="tithesByTypeChart"></canvas></div></div><div class="chart-card"><h3>Tithes Monthly Trend</h3><div class="chart-container"><canvas id="tithesTrendChart"></canvas></div></div><div class="chart-card"><h3>Top Tithers</h3><div class="chart-container"><canvas id="topTithersChart"></canvas></div></div><div class="chart-card"><h3>Tithes Growth Rate <span id="tithesGrowthBadge"></span></h3><div class="chart-container"><canvas id="tithesGrowthChart"></canvas></div></div></div><div class="data-table" id="tithesTable"></div></div>
+  <div id="expensesTab" class="tab-pane hidden"><div class="cards-grid" id="expensesKPIs"></div><div class="dashboard-grid"><div class="chart-card"><h3>Expenses by Category</h3><div class="chart-container"><canvas id="expensesByCategoryChart"></canvas></div></div><div class="chart-card"><h3>Expenses Monthly Trend</h3><div class="chart-container"><canvas id="expensesTrendChart"></canvas></div></div><div class="chart-card"><h3>Top Expense Categories</h3><div class="chart-container"><canvas id="topExpensesChart"></canvas></div></div><div class="chart-card"><h3>Expenses Growth Rate <span id="expensesGrowthBadge"></span></h3><div class="chart-container"><canvas id="expensesGrowthChart"></canvas></div></div></div><div class="data-table" id="expensesTable"></div></div>
+  <div id="advancedTab" class="tab-pane hidden"><div class="cards-grid" id="advancedKPIs"></div><div class="dashboard-grid"><div class="chart-card"><h3>3-Month Moving Average</h3><div class="chart-container"><canvas id="movingAvgChart"></canvas></div></div><div class="chart-card"><h3>3-Month Forecast</h3><div class="chart-container"><canvas id="forecastChart"></canvas></div></div><div class="chart-card"><h3>Seasonality Analysis</h3><div class="chart-container"><canvas id="seasonalityChart"></canvas></div></div><div class="chart-card"><h3>Anomaly Detection</h3><div class="chart-container"><canvas id="anomalyChart"></canvas></div></div></div><div class="data-table" id="advancedReportTable"></div></div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+  Chart.register(ChartDataLabels);
+  Chart.defaults.set('plugins.datalabels', { color: '#1f2937', anchor: 'end', align: 'top', offset: 5, font: { size: 9, weight: 'bold' } });
+  
+  // ==================== CONFIGURATION ====================
+  // REPLACE WITH YOUR GOOGLE APPS SCRIPT URL
+  const WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbySOV6jW9K-w0qACbmJZoklhjahZUPqTuRNYyo8-QwBGVNrkTjKodfDNMgyKN0FUNXG/exec";
+  
+  let financialData = { offerings: [], tithes: [], expenses: [] };
+  let currentFilters = { year: "all", month: "all", category: "all" };
+  let charts = {};
+  let isSaving = false;
+  
+  function showToast(msg, isError = false) {
+    let t = document.getElementById("toast");
+    t.innerText = msg;
+    t.style.display = "block";
+    if (isError) t.style.borderLeftColor = "#ef4444";
+    else t.style.borderLeftColor = "#f5b042";
+    setTimeout(() => { t.style.display = "none"; t.style.borderLeftColor = "#f5b042"; }, 3000);
+  }
+  
+  // ==================== LOCAL BACKUP FUNCTIONS ====================
+  function saveLocalBackup() {
+    localStorage.setItem('mpac_financial_backup', JSON.stringify(financialData));
+  }
+  
+  function loadLocalBackup() {
+    const saved = localStorage.getItem('mpac_financial_backup');
+    if (saved) {
+      try {
+        financialData = JSON.parse(saved);
+        document.getElementById("syncStatus").innerHTML = "⚠️ Offline Mode • Local Data";
+        showToast("📀 Loaded data from local storage", true);
+        updateAllDashboards();
+        return true;
+      } catch(e) { console.error(e); }
+    }
+    return false;
+  }
+  
+  // ==================== CLOUD DATA FUNCTIONS ====================
+  async function pullData() {
+    try {
+      const response = await fetch(`${WEBHOOK_URL}?action=getData&t=${Date.now()}`);
+      const data = await response.json();
+      
+      if (data.success) {
+        financialData = {
+          offerings: data.offerings || [],
+          tithes: data.tithes || [],
+          expenses: data.expenses || []
+        };
+        document.getElementById("syncStatus").innerHTML = "🟢 Live Cloud Sync • " + new Date().toLocaleTimeString();
+        showToast("✅ Data synced from cloud!");
+        updateAllDashboards();
+        saveLocalBackup();
+      } else {
+        throw new Error("Invalid response");
+      }
+    } catch (error) {
+      console.error("Pull error:", error);
+      document.getElementById("syncStatus").innerHTML = "⚠️ Offline Mode";
+      if (!loadLocalBackup()) {
+        loadDemoData();
+        updateAllDashboards();
+      }
+      showToast("⚠️ Using local data. Cloud sync unavailable.", true);
+    }
+  }
+  
+  async function pushToCloud(type, record) {
+    isSaving = true;
+    
+    // Add to local data immediately (optimistic update)
+    if (type === 'offering') financialData.offerings.unshift(record);
+    else if (type === 'tithe') financialData.tithes.unshift(record);
+    else if (type === 'expense') financialData.expenses.unshift(record);
+    updateAllDashboards();
+    saveLocalBackup();
+    
+    try {
+      // Use no-cors mode like the working example
+      await fetch(WEBHOOK_URL, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: type, record: record })
+      });
+      
+      showToast(`✨ ${type.charAt(0).toUpperCase() + type.slice(1)} synced to cloud!`);
+      // Refresh data after a short delay to get any server-side changes
+      setTimeout(() => pullData(), 1000);
+      return true;
+    } catch (error) {
+      console.error("Push error:", error);
+      showToast(`💾 ${type} saved locally. Will sync when online.`, true);
+      return false;
+    } finally {
+      isSaving = false;
+    }
+  }
+  
+  function loadDemoData() {
+    financialData = {
+      offerings: [
+        { type: "General Offering", amount: 12500, date: "2026-03-27", month: "Mar", monthNum: 3, year: 2026, receivedBy: "Treasurer" },
+        { type: "General Offering", amount: 10800, date: "2026-02-10", month: "Feb", monthNum: 2, year: 2026, receivedBy: "Treasurer" },
+        { type: "General Offering", amount: 9500, date: "2026-01-15", month: "Jan", monthNum: 1, year: 2026, receivedBy: "Treasurer" },
+        { type: "Thanksgiving", amount: 3450, date: "2026-03-20", month: "Mar", monthNum: 3, year: 2026, receivedBy: "Secretary" },
+        { type: "Building Fund", amount: 8900, date: "2026-03-15", month: "Mar", monthNum: 3, year: 2026, receivedBy: "Treasurer" },
+        { type: "First Fruits", amount: 15600, date: "2026-03-05", month: "Mar", monthNum: 3, year: 2026, receivedBy: "Pastor" }
+      ],
+      tithes: [
+        { type: "Regular Tithe (10%)", amount: 28700, date: "2026-03-25", month: "Mar", monthNum: 3, year: 2026, memberName: "John Doe" },
+        { type: "Regular Tithe (10%)", amount: 25400, date: "2026-02-22", month: "Feb", monthNum: 2, year: 2026, memberName: "Robert Johnson" }
+      ],
+      expenses: [
+        { category: "Salaries", amount: 18500, date: "2026-03-15", month: "Mar", monthNum: 3, year: 2026, description: "Staff" },
+        { category: "Utilities", amount: 4200, date: "2026-03-20", month: "Mar", monthNum: 3, year: 2026, description: "Electricity" }
+      ]
+    };
+    saveLocalBackup();
+  }
+  
+  // ==================== BUTTON STATE FUNCTIONS ====================
+  function setButtonLoading(buttonId, isLoading) {
+    const btn = document.getElementById(buttonId);
+    if (!btn) return;
+    
+    if (isLoading) {
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+    } else {
+      btn.disabled = false;
+      if (buttonId === 'saveOfferingBtn') {
+        btn.innerHTML = '<i class="fas fa-cloud-upload-alt"></i> Sync to Cloud';
+      } else if (buttonId === 'saveTitheBtn') {
+        btn.innerHTML = '<i class="fas fa-cloud-upload-alt"></i> Sync to Cloud';
+      } else if (buttonId === 'saveExpenseBtn') {
+        btn.innerHTML = '<i class="fas fa-cloud-upload-alt"></i> Sync to Cloud';
+      }
+    }
+  }
+  
+  // ==================== FORM HANDLERS ====================
+  document.getElementById('saveOfferingBtn').addEventListener('click', async (e) => {
+    e.preventDefault();
+    if (isSaving) { showToast("Please wait, saving in progress...", true); return; }
+    
+    const amount = parseFloat(document.getElementById('offeringAmount').value);
+    if (isNaN(amount) || amount <= 0) return showToast("Enter valid amount", true);
+    const dateValue = document.getElementById('offeringDate').value;
+    if (!dateValue) return showToast("Select a date", true);
+    const date = new Date(dateValue);
+    
+    const record = {
+      date: date.toISOString().slice(0,10),
+      type: document.getElementById('offeringTypeSelect').value,
+      amount: amount,
+      receivedBy: document.getElementById('offeringReceivedBy').value || "Treasurer",
+      month: date.toLocaleString('default', { month: 'short' }),
+      monthNum: date.getMonth() + 1,
+      year: date.getFullYear()
+    };
+    
+    setButtonLoading('saveOfferingBtn', true);
+    await pushToCloud("offering", record);
+    setButtonLoading('saveOfferingBtn', false);
+    
+    document.getElementById('offeringForm').reset();
+    document.getElementById('offeringDate').value = new Date().toISOString().slice(0,10);
+  });
+  
+  document.getElementById('saveTitheBtn').addEventListener('click', async (e) => {
+    e.preventDefault();
+    if (isSaving) { showToast("Please wait, saving in progress...", true); return; }
+    
+    const amount = parseFloat(document.getElementById('titheAmount').value);
+    if (isNaN(amount) || amount <= 0) return showToast("Enter valid amount", true);
+    if (!document.getElementById('memberName').value) return showToast("Enter member name", true);
+    const dateValue = document.getElementById('titheDate').value;
+    if (!dateValue) return showToast("Select a date", true);
+    const date = new Date(dateValue);
+    
+    const record = {
+      date: date.toISOString().slice(0,10),
+      memberName: document.getElementById('memberName').value,
+      type: document.getElementById('titheTypeSelect').value,
+      amount: amount,
+      month: date.toLocaleString('default', { month: 'short' }),
+      monthNum: date.getMonth() + 1,
+      year: date.getFullYear()
+    };
+    
+    setButtonLoading('saveTitheBtn', true);
+    await pushToCloud("tithe", record);
+    setButtonLoading('saveTitheBtn', false);
+    
+    document.getElementById('titheForm').reset();
+    document.getElementById('titheDate').value = new Date().toISOString().slice(0,10);
+  });
+  
+  document.getElementById('saveExpenseBtn').addEventListener('click', async (e) => {
+    e.preventDefault();
+    if (isSaving) { showToast("Please wait, saving in progress...", true); return; }
+    
+    const amount = parseFloat(document.getElementById('expenseAmount').value);
+    if (isNaN(amount) || amount <= 0) return showToast("Enter valid amount", true);
+    const dateValue = document.getElementById('expenseDate').value;
+    if (!dateValue) return showToast("Select a date", true);
+    const date = new Date(dateValue);
+    
+    const record = {
+      date: date.toISOString().slice(0,10),
+      category: document.getElementById('expenseCategorySelect').value,
+      description: document.getElementById('expenseDescription').value || "Expense",
+      amount: amount,
+      month: date.toLocaleString('default', { month: 'short' }),
+      monthNum: date.getMonth() + 1,
+      year: date.getFullYear()
+    };
+    
+    setButtonLoading('saveExpenseBtn', true);
+    await pushToCloud("expense", record);
+    setButtonLoading('saveExpenseBtn', false);
+    
+    document.getElementById('expenseForm').reset();
+    document.getElementById('expenseDate').value = new Date().toISOString().slice(0,10);
+  });
+  
+  // ==================== FILTER & DASHBOARD FUNCTIONS ====================
+  function filterData() {
+    let { year, month, category } = currentFilters;
+    let offerings = financialData.offerings.filter(o => (year === "all" || o.year == year) && (month === "all" || o.monthNum == month));
+    let tithes = financialData.tithes.filter(t => (year === "all" || t.year == year) && (month === "all" || t.monthNum == month));
+    let expenses = financialData.expenses.filter(e => (year === "all" || e.year == year) && (month === "all" || e.monthNum == month));
+    if (category === "offerings") return { offerings, tithes: [], expenses: [] };
+    if (category === "tithes") return { offerings: [], tithes, expenses: [] };
+    if (category === "expenses") return { offerings: [], tithes: [], expenses };
+    return { offerings, tithes, expenses };
+  }
+  
+  function getMonthlySeries(items) {
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    let series = months.map(() => 0);
+    items.forEach(i => { let idx = months.indexOf(i.month); if (idx !== -1) series[idx] += i.amount; });
+    return series;
+  }
+  
+  function growthRate(series) {
+    return series.map((v, i) => i === 0 || series[i-1] === 0 ? 0 : ((v - series[i-1]) / series[i-1]) * 100);
+  }
+  
+  function updateAllDashboards() {
+    const filtered = filterData();
+    const totalOff = filtered.offerings.reduce((s, o) => s + o.amount, 0);
+    const totalTit = filtered.tithes.reduce((s, t) => s + t.amount, 0);
+    const totalExp = filtered.expenses.reduce((s, e) => s + e.amount, 0);
+    const totalInc = totalOff + totalTit;
+    const balance = totalInc - totalExp;
+    document.getElementById("balanceAmount").innerHTML = `ZAR ${balance.toLocaleString()}`;
+    
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const offS = getMonthlySeries(filtered.offerings);
+    const titS = getMonthlySeries(filtered.tithes);
+    const expS = getMonthlySeries(filtered.expenses);
+    const incS = months.map((_, i) => offS[i] + titS[i]);
+    const offG = growthRate(offS), titG = growthRate(titS), expG = growthRate(expS);
+    
+    document.getElementById("mainKPIs").innerHTML = `<div class="stat-card"><div class="card-value">ZAR ${totalOff.toLocaleString()}</div><div class="card-label">Offerings</div><div class="${offG[2] > 0 ? 'trend-up' : 'trend-down'}">${offG[2] > 0 ? '↑' : '↓'} ${Math.abs(offG[2]).toFixed(1)}% MoM</div></div><div class="stat-card"><div class="card-value">ZAR ${totalTit.toLocaleString()}</div><div class="card-label">Tithes</div><div class="${titG[2] > 0 ? 'trend-up' : 'trend-down'}">${titG[2] > 0 ? '↑' : '↓'} ${Math.abs(titG[2]).toFixed(1)}% MoM</div></div><div class="stat-card"><div class="card-value">ZAR ${totalInc.toLocaleString()}</div><div class="card-label">Total Income</div></div><div class="stat-card"><div class="card-value">ZAR ${totalExp.toLocaleString()}</div><div class="card-label">Expenses</div><div class="${expG[2] > 0 ? 'trend-up' : 'trend-down'}">${expG[2] > 0 ? '↑' : '↓'} ${Math.abs(expG[2]).toFixed(1)}% MoM</div></div>`;
+    
+    document.getElementById("offeringsKPIs").innerHTML = `<div class="stat-card"><div class="card-value">ZAR ${totalOff.toLocaleString()}</div><div class="card-label">Total Offerings</div><div class="${offG[2] > 0 ? 'trend-up' : 'trend-down'}">${offG[2] > 0 ? '↑' : '↓'} ${Math.abs(offG[2]).toFixed(1)}% MoM</div></div>`;
+    document.getElementById("tithesKPIs").innerHTML = `<div class="stat-card"><div class="card-value">ZAR ${totalTit.toLocaleString()}</div><div class="card-label">Total Tithes</div><div class="${titG[2] > 0 ? 'trend-up' : 'trend-down'}">${titG[2] > 0 ? '↑' : '↓'} ${Math.abs(titG[2]).toFixed(1)}% MoM</div></div>`;
+    document.getElementById("expensesKPIs").innerHTML = `<div class="stat-card"><div class="card-value">ZAR ${totalExp.toLocaleString()}</div><div class="card-label">Total Expenses</div><div class="${expG[2] > 0 ? 'trend-up' : 'trend-down'}">${expG[2] > 0 ? '↑' : '↓'} ${Math.abs(expG[2]).toFixed(1)}% MoM</div></div>`;
+    document.getElementById("advancedKPIs").innerHTML = `<div class="stat-card"><div class="card-value">ZAR ${balance.toLocaleString()}</div><div class="card-label">Net Balance</div></div><div class="stat-card"><div class="card-value">${((totalInc - totalExp) / (totalInc || 1) * 100).toFixed(1)}%</div><div class="card-label">Margin</div></div>`;
+    
+    document.getElementById("offeringsGrowthBadge").innerHTML = `<span class="${offG[2] > 0 ? 'trend-up' : 'trend-down'}">📈 ${offG[2] > 0 ? '+' : ''}${offG[2].toFixed(1)}% MoM</span>`;
+    document.getElementById("tithesGrowthBadge").innerHTML = `<span class="${titG[2] > 0 ? 'trend-up' : 'trend-down'}">📈 ${titG[2] > 0 ? '+' : ''}${titG[2].toFixed(1)}% MoM</span>`;
+    document.getElementById("expensesGrowthBadge").innerHTML = `<span class="${expG[2] > 0 ? 'trend-up' : 'trend-down'}">📈 ${expG[2] > 0 ? '+' : ''}${expG[2].toFixed(1)}% MoM</span>`;
+    
+    const offeringTypes = filtered.offerings.reduce((a, o) => { a[o.type] = (a[o.type] || 0) + o.amount; return a; }, {});
+    const titheTypes = filtered.tithes.reduce((a, t) => { a[t.type] = (a[t.type] || 0) + t.amount; return a; }, {});
+    const expenseCats = filtered.expenses.reduce((a, e) => { a[e.category] = (a[e.category] || 0) + e.amount; return a; }, {});
+    const top5 = Object.entries(offeringTypes).sort((a, b) => b[1] - a[1]).slice(0, 5);
+    const titherTotals = filtered.tithes.reduce((a, t) => { a[t.memberName] = (a[t.memberName] || 0) + t.amount; return a; }, {});
+    
+    const updateChart = (id, cfg) => { if (charts[id]) charts[id].destroy(); charts[id] = new Chart(document.getElementById(id), cfg); };
+    
+    updateChart("incomePieChart", { type: 'doughnut', data: { labels: ['Offerings', 'Tithes'], datasets: [{ data: [totalOff, totalTit], backgroundColor: ['#c62828', '#0a2f44'] }] }, options: { plugins: { datalabels: { formatter: (v) => `ZAR ${v.toLocaleString()}`, anchor: 'center', color: 'white' } } } });
+    updateChart("monthlyIncomeTrendChart", { type: 'line', data: { labels: months, datasets: [{ label: 'Income', data: incS, borderColor: '#c62828', fill: true, tension: 0.4 }] } });
+    updateChart("incomeExpenseCompareChart", { type: 'bar', data: { labels: ['Income', 'Expenses'], datasets: [{ label: 'Amount', data: [totalInc, totalExp], backgroundColor: ['#0a2f44', '#c62828'] }] } });
+    updateChart("topCategoriesChart", { type: 'bar', data: { labels: top5.map(c => c[0]), datasets: [{ label: 'Amount', data: top5.map(c => c[1]), backgroundColor: '#c62828' }] } });
+    updateChart("offeringsByTypeChart", { type: 'bar', data: { labels: Object.keys(offeringTypes), datasets: [{ label: 'Amount', data: Object.values(offeringTypes), backgroundColor: '#c62828' }] } });
+    updateChart("offeringsTrendChart", { type: 'line', data: { labels: months, datasets: [{ label: 'Offerings', data: offS, borderColor: '#c62828', fill: true }] } });
+    updateChart("offeringsPieChart", { type: 'pie', data: { labels: Object.keys(offeringTypes), datasets: [{ data: Object.values(offeringTypes), backgroundColor: ['#c62828', '#e57373', '#ef9a9a', '#ffcdd2', '#b71c1c', '#d32f2f', '#f44336', '#ff6659'] }] }, options: { plugins: { datalabels: { formatter: (v) => `ZAR ${v.toLocaleString()}`, anchor: 'center', color: 'white' } } } });
+    updateChart("offeringsGrowthChart", { type: 'line', data: { labels: months, datasets: [{ label: 'Growth %', data: offG, borderColor: '#10b981', fill: true }] } });
+    updateChart("tithesByTypeChart", { type: 'pie', data: { labels: Object.keys(titheTypes), datasets: [{ data: Object.values(titheTypes), backgroundColor: ['#0a2f44', '#1e4a6e', '#2c5a7a'] }] }, options: { plugins: { datalabels: { formatter: (v) => `ZAR ${v.toLocaleString()}`, anchor: 'center', color: 'white' } } } });
+    updateChart("tithesTrendChart", { type: 'line', data: { labels: months, datasets: [{ label: 'Tithes', data: titS, borderColor: '#0a2f44', fill: true }] } });
+    updateChart("topTithersChart", { type: 'bar', data: { labels: Object.keys(titherTotals).slice(0, 5), datasets: [{ label: 'Amount', data: Object.values(titherTotals).slice(0, 5), backgroundColor: '#0a2f44' }] } });
+    updateChart("tithesGrowthChart", { type: 'line', data: { labels: months, datasets: [{ label: 'Growth %', data: titG, borderColor: '#0a2f44', fill: true }] } });
+    updateChart("expensesByCategoryChart", { type: 'pie', data: { labels: Object.keys(expenseCats), datasets: [{ data: Object.values(expenseCats), backgroundColor: ['#c62828', '#e57373', '#ef9a9a', '#ffcdd2', '#b71c1c'] }] }, options: { plugins: { datalabels: { formatter: (v) => `ZAR ${v.toLocaleString()}`, anchor: 'center', color: 'white' } } } });
+    updateChart("expensesTrendChart", { type: 'line', data: { labels: months, datasets: [{ label: 'Expenses', data: expS, borderColor: '#c62828', fill: true }] } });
+    updateChart("topExpensesChart", { type: 'bar', data: { labels: Object.keys(expenseCats), datasets: [{ label: 'Amount', data: Object.values(expenseCats), backgroundColor: '#c62828' }] } });
+    updateChart("expensesGrowthChart", { type: 'line', data: { labels: months, datasets: [{ label: 'Growth %', data: expG, borderColor: '#c62828', fill: true }] } });
+    
+    const ma3 = incS.map((_, i) => i < 2 ? null : (incS[i] + incS[i-1] + incS[i-2]) / 3);
+    updateChart("movingAvgChart", { type: 'line', data: { labels: months, datasets: [{ label: 'Income', data: incS, borderColor: '#c62828' }, { label: '3-Month MA', data: ma3, borderColor: '#0a2f44', borderDash: [5, 5] }] } });
+    const forecast = incS.slice(-3).map(v => v * 1.09);
+    updateChart("forecastChart", { type: 'line', data: { labels: [...months.slice(-3), 'Apr', 'May', 'Jun'], datasets: [{ label: 'Historical', data: [...incS.slice(-3), null, null, null], borderColor: '#c62828' }, { label: 'Forecast', data: [...Array(3).fill(null), ...forecast], borderColor: '#10b981', borderDash: [5, 5] }] } });
+    const avg = incS.filter(v => v > 0).reduce((a, b) => a + b, 0) / incS.filter(v => v > 0).length;
+    const season = incS.map(v => v / avg);
+    updateChart("seasonalityChart", { type: 'bar', data: { labels: months, datasets: [{ label: 'Seasonality Index', data: season, backgroundColor: '#c62828' }] } });
+    const mean = incS.filter(v => v > 0).reduce((a, b) => a + b, 0) / incS.filter(v => v > 0).length;
+    const std = Math.sqrt(incS.map(v => Math.pow(v - mean, 2)).reduce((a, b) => a + b, 0) / incS.length);
+    const anomalies = incS.map(v => Math.abs(v - mean) > 1.5 * std);
+    updateChart("anomalyChart", { type: 'bar', data: { labels: months, datasets: [{ label: 'Income', data: incS, backgroundColor: anomalies.map(a => a ? '#ef4444' : '#c62828') }] } });
+    
+    document.getElementById("offeringsTable").innerHTML = ` <thead> <th>Date</th><th>Type</th><th>Amount</th> </thead><tbody>${filtered.offerings.slice(-12).reverse().map(o => `  <td>${o.date}</td><td>${o.type}</td><td>ZAR ${o.amount.toLocaleString()}</td> `).join('')}</tbody>`;
+    document.getElementById("tithesTable").innerHTML = ` <thead> <th>Date</th><th>Member</th><th>Type</th><th>Amount</th> </thead><tbody>${filtered.tithes.slice(-12).reverse().map(t => `  <td>${t.date}</td><td>${t.memberName}</td><td>${t.type}</td><td>ZAR ${t.amount.toLocaleString()}</td> `).join('')}</tbody>`;
+    document.getElementById("expensesTable").innerHTML = ` <thead> <th>Date</th><th>Category</th><th>Description</th><th>Amount</th> </thead><tbody>${filtered.expenses.slice(-12).reverse().map(e => `  <td>${e.date}</td><td>${e.category}</td><td>${e.description || '-'}</td><td>ZAR ${e.amount.toLocaleString()}</td> `).join('')}</tbody>`;
+    document.getElementById("advancedReportTable").innerHTML = ` <thead> <th>Metric</th><th>Value</th> </thead><tbody> <tr><td>Net Balance</td><td>ZAR ${balance.toLocaleString()}</td></tr> <tr><td>Profit Margin</td><td>${((totalInc - totalExp) / (totalInc || 1) * 100).toFixed(1)}%</td></tr> <tr><td>Offerings MoM Growth</td><td class="${offG[2] > 0 ? 'trend-up' : 'trend-down'}">${offG[2].toFixed(1)}%</td></tr> <tr><td>Tithes MoM Growth</td><td class="${titG[2] > 0 ? 'trend-up' : 'trend-down'}">${titG[2].toFixed(1)}%</td></tr> </tbody>`;
+  }
+  
+  function applyFilters() {
+    currentFilters = {
+      year: document.getElementById("yearFilter").value,
+      month: document.getElementById("monthFilter").value,
+      category: document.getElementById("categoryFilter").value
+    };
+    updateAllDashboards();
+    showToast("Filters applied");
+  }
+  
+  // ==================== EVENT LISTENERS ====================
+  document.getElementById("applyFilters").addEventListener("click", applyFilters);
+  document.querySelectorAll('.tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      document.querySelectorAll('.tab-pane').forEach(pane => pane.classList.add('hidden'));
+      document.getElementById(tab.dataset.tab + 'Tab').classList.remove('hidden');
+      updateAllDashboards();
+    });
+  });
+  
+  document.querySelectorAll('.epic-card').forEach(card => {
+    card.addEventListener('click', () => {
+      document.querySelectorAll('.epic-card').forEach(c => c.classList.remove('active'));
+      card.classList.add('active');
+      const type = card.dataset.type;
+      document.getElementById('offeringFormContainer').classList.add('hidden');
+      document.getElementById('titheFormContainer').classList.add('hidden');
+      document.getElementById('expenseFormContainer').classList.add('hidden');
+      if (type === 'offering') document.getElementById('offeringFormContainer').classList.remove('hidden');
+      if (type === 'tithe') document.getElementById('titheFormContainer').classList.remove('hidden');
+      if (type === 'expense') document.getElementById('expenseFormContainer').classList.remove('hidden');
+    });
+  });
+  
+  ["offering", "tithe", "expense"].forEach(type => document.getElementById(`${type}Date`).value = new Date().toISOString().slice(0,10));
+  
+  // ==================== INITIAL LOAD ====================
+  pullData();
+  // Auto-refresh every 30 seconds
+  setInterval(pullData, 30000);
+  showToast("🌐 Connected to Google Sheets Cloud • Real-time sync active");
+</script>
+</body>
+</html>
+![Uploading image.png…]()
